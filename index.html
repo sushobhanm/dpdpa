@@ -1,0 +1,1705 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Indorama Ventures GSS — VAPT Intelligence Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#1e3a5f;--navy2:#ffffff;--navy3:#f1f5f9;--navy4:#e2e8f0;
+  --amber:#d97706;--amber2:#b45309;--amber3:#f59e0b;
+  --red:#dc2626;--red2:#b91c1c;
+  --green:#059669;--green2:#047857;
+  --blue:#1d4ed8;--blue2:#2563eb;
+  --teal:#0f766e;--teal2:#0d9488;
+  --orange:#c2410c;
+  --text1:#0f172a;--text2:#1e293b;--text3:#475569;--text4:#94a3b8;
+  --border:#e2e8f0;--border2:#cbd5e1;
+}
+body{background:#f8fafc;color:var(--text1);font-family:'Inter',sans-serif;font-size:14px;line-height:1.5;min-height:100vh;}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;}
+
+/* NAV */
+.nav{background:#080f1a;border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;}
+.nav-brand{display:flex;align-items:center;gap:14px;}
+.nav-logo{width:36px;height:36px;background:var(--amber);border-radius:6px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#000;letter-spacing:.5px;}
+.nav-title{font-size:14px;font-weight:600;color:var(--text1);}
+.nav-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.nav-right{display:flex;align-items:center;gap:20px;}
+.rag-badge{padding:5px 14px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.6px;}
+.rag-high{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.35);}
+.nav-score-wrap{text-align:right;}
+.nav-score-label{font-size:10px;color:var(--text4);margin-bottom:2px;}
+.nav-score{font-size:20px;font-weight:700;color:var(--amber);}
+
+/* TABS */
+.tabs{background:#080f1a;border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:0;overflow-x:auto;}
+.tab{padding:13px 18px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;letter-spacing:.3px;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--teal2);border-bottom-color:var(--teal2);}
+
+/* LAYOUT */
+.page{display:none;padding:22px 24px;max-width:1440px;margin:0 auto;}
+.page.active{display:block;}
+
+/* GRIDS */
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px;}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px;}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:18px;}
+@media(max-width:1000px){.grid-5,.grid-4{grid-template-columns:repeat(2,1fr);}.grid-3{grid-template-columns:1fr;}.grid-2{grid-template-columns:1fr;}}
+
+/* CARDS */
+.card{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:18px 20px;}
+.card-sm{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;}
+.card-title{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.9px;margin-bottom:14px;}
+.kpi-label{font-size:10px;color:var(--text4);margin-bottom:6px;text-transform:uppercase;letter-spacing:.7px;}
+.kpi-value{font-size:30px;font-weight:700;line-height:1;}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:4px;}
+.kpi-red{color:#fca5a5;}
+.kpi-amber{color:var(--amber);}
+.kpi-green{color:var(--teal2);}
+.kpi-blue{color:var(--blue2);}
+.kpi-white{color:var(--text1);}
+.kpi-teal{color:var(--teal2);}
+
+/* SEVERITY BADGES */
+.sev{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:600;letter-spacing:.3px;}
+.sev-critical{background:rgba(239,68,68,.18);color:#fca5a5;border:1px solid rgba(239,68,68,.4);}
+.sev-high{background:rgba(249,115,22,.18);color:#fdba74;border:1px solid rgba(249,115,22,.4);}
+.sev-medium{background:rgba(245,158,11,.18);color:#fde68a;border:1px solid rgba(245,158,11,.4);}
+.sev-low{background:rgba(59,130,246,.18);color:#93c5fd;border:1px solid rgba(59,130,246,.4);}
+
+/* STATUS */
+.status{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:3px;font-size:11px;font-weight:500;}
+.status-open{background:rgba(239,68,68,.13);color:#fca5a5;}
+.status-progress{background:rgba(245,158,11,.13);color:#fde68a;}
+.status-closed{background:rgba(20,184,166,.13);color:#5eead4;}
+.status-dot{width:6px;height:6px;border-radius:50%;background:currentColor;}
+
+/* FINDINGS TABLE */
+.findings-table{width:100%;border-collapse:collapse;}
+.findings-table th{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.7px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border2);}
+.findings-table td{padding:10px 12px;border-bottom:1px solid rgba(30,52,80,.6);font-size:12px;vertical-align:top;}
+.findings-table tr:last-child td{border-bottom:none;}
+.findings-table tr:hover td{background:rgba(255,255,255,.02);}
+.asset-name{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);}
+
+/* PROGRESS */
+.progress-track{height:5px;background:var(--navy4);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;border-radius:3px;}
+
+/* CHART LEGEND */
+.chart-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px;justify-content:center;}
+.legend-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+/* ALERT BANNER */
+.alert-banner{background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:10px 14px;font-size:12px;color:#fca5a5;display:flex;align-items:flex-start;gap:8px;margin-bottom:18px;}
+.alert-icon{font-size:14px;flex-shrink:0;margin-top:1px;}
+.info-banner{background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.25);border-radius:6px;padding:10px 14px;font-size:12px;color:#5eead4;display:flex;align-items:flex-start;gap:8px;margin-bottom:18px;}
+
+/* SURFACE BAR */
+.surface-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(30,52,80,.6);}
+.surface-item:last-child{border-bottom:none;}
+.surface-icon{width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+.surface-bar-wrap{flex:1;}
+.surface-label{font-size:13px;font-weight:500;color:var(--text1);margin-bottom:4px;}
+.surface-count{font-size:11px;color:var(--text3);}
+
+/* TIMELINE / RECS */
+.rec-item{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid rgba(30,52,80,.6);}
+.rec-item:last-child{border-bottom:none;}
+.rec-num{width:28px;height:28px;border-radius:50%;background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.3);color:var(--amber);font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.rec-title{font-size:13px;font-weight:600;color:var(--text1);margin-bottom:5px;}
+.rec-body{font-size:12px;color:var(--text2);line-height:1.6;}
+.rec-tag{font-size:10px;font-weight:600;color:var(--amber);margin-top:6px;letter-spacing:.4px;}
+
+/* MATURITY */
+.mat-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid rgba(30,52,80,.5);}
+.mat-row:last-child{border-bottom:none;}
+.mat-label{font-size:12px;color:var(--text2);width:180px;flex-shrink:0;}
+.mat-bar-wrap{flex:1;display:flex;align-items:center;gap:10px;}
+.mat-bar-bg{height:6px;background:var(--navy4);border-radius:3px;flex:1;overflow:visible;position:relative;}
+.mat-bar-fill{height:100%;border-radius:3px;}
+.mat-scores{font-size:11px;color:var(--text3);white-space:nowrap;}
+
+/* CVE TABLE */
+.cve-table{width:100%;border-collapse:collapse;}
+.cve-table th{font-size:10px;font-weight:700;color:var(--text4);text-transform:uppercase;letter-spacing:.7px;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border2);}
+.cve-table td{padding:9px 12px;border-bottom:1px solid rgba(30,52,80,.5);font-size:12px;}
+.cve-table tr:last-child td{border-bottom:none;}
+.cvss-pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+.cvss-10{background:rgba(239,68,68,.25);color:#fca5a5;}
+.cvss-9{background:rgba(239,68,68,.18);color:#fca5a5;}
+.cvss-8{background:rgba(249,115,22,.18);color:#fdba74;}
+
+/* PHASE CARDS */
+.phase-card{background:var(--navy2);border:1px solid var(--border);border-radius:8px;padding:16px 18px;}
+.phase-badge{display:inline-block;padding:3px 10px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.5px;margin-bottom:10px;}
+.phase-1{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.3);}
+.phase-2{background:rgba(245,158,11,.15);color:#fde68a;border:1px solid rgba(245,158,11,.3);}
+.phase-3{background:rgba(20,184,166,.15);color:#5eead4;border:1px solid rgba(20,184,166,.3);}
+.phase-title{font-size:13px;font-weight:600;color:var(--text1);margin-bottom:8px;}
+.phase-body{font-size:12px;color:var(--text2);line-height:1.7;}
+.phase-metric{font-size:11px;color:var(--teal2);margin-top:8px;font-weight:600;}
+
+/* KILL CHAIN */
+.kc-step{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid rgba(30,52,80,.5);}
+.kc-step:last-child{border-bottom:none;}
+.kc-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;}
+.kc-body{flex:1;}
+.kc-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.kc-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+
+/* POSITIVE INDICATOR */
+.positive-box{background:rgba(20,184,166,.06);border:1px solid rgba(20,184,166,.2);border-radius:6px;padding:10px 14px;margin-bottom:10px;}
+.positive-title{font-size:12px;font-weight:600;color:var(--teal2);margin-bottom:3px;}
+.positive-body{font-size:11px;color:var(--text2);}
+
+/* FOOTER */
+.footer{padding:14px 24px;border-top:1px solid var(--border);text-align:center;font-size:10px;color:var(--text4);letter-spacing:.3px;}
+
+/* ANIMATIONS */
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fade-in{animation:fadeInUp .35s ease forwards;}
+.fade-in-2{animation:fadeInUp .35s .08s ease both;}
+.fade-in-3{animation:fadeInUp .35s .16s ease both;}
+
+/* PRINT */
+@media print{.nav,.tabs{position:static;}.page{display:block!important;}body{background:#fff;color:#000;}}
+</style>
+</head>
+<body>
+<h2 class="sr-only">Indorama Ventures GSS — VAPT Security Intelligence Dashboard. 656 findings across 186 assets. 60 Critical, all open. Assessment period 27 March – 4 May 2026.</h2>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">IV</div>
+    <div>
+      <div class="nav-title">Indorama Ventures Global Shared Services — VAPT Intelligence Dashboard</div>
+      <div class="nav-sub">Assessment Period: 27 Mar – 4 May 2026 &nbsp;|&nbsp; Report Ref: PIPL/25-26/Indorama/VAPT/S1/06052026 &nbsp;|&nbsp; Prepared by: Prime Infoserv Pvt. Ltd.</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <div>
+      <div class="nav-score-label">OVERALL POSTURE</div>
+      <span class="rag-badge rag-high">ELEVATED RISK</span>
+    </div>
+    <div class="nav-score-wrap">
+      <div class="nav-score-label">OPEN FINDINGS</div>
+      <div class="nav-score">656</div>
+    </div>
+  </div>
+</nav>
+
+<!-- TABS -->
+<div class="tabs" id="tabBar">
+  <div class="tab active" data-page="scope">Scope &amp; Coverage</div>
+  <div class="tab" data-page="approach">Approach &amp; Methodology</div>
+  <div class="tab" data-page="overview">Executive Overview</div>
+  <div class="tab" data-page="findings">Critical Findings</div>
+  <div class="tab" data-page="cves">Top CVEs</div>
+  <div class="tab" data-page="surface">Attack Surface</div>
+  <div class="tab" data-page="killchain">Attacker Kill Chain</div>
+  <div class="tab" data-page="assets">Asset Inventory</div>
+  <div class="tab" data-page="maturity">Security Maturity</div>
+  <div class="tab" data-page="recommendations">Roadmap &amp; Actions</div>
+  <div class="tab" data-page="benefits">Benefits &amp; Value</div>
+  <div class="tab" data-page="wayforward">Way Forward</div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 0A: SCOPE & COVERAGE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page active fade-in" id="page-scope">
+
+  <!-- Hero KPI strip -->
+  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;margin-bottom:18px;box-shadow:0 1px 4px rgba(0,0,0,.07);">
+    <div style="background:#1e3a5f;padding:20px 22px;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:4px;">TOTAL ASSETS</div>
+      <div style="font-size:36px;font-weight:700;color:#fff;line-height:1;">186</div>
+      <div style="font-size:11px;color:#bfdbfe;margin-top:4px;">In-scope for VAPT</div>
+    </div>
+    <div style="background:#fff;padding:20px 22px;text-align:center;border-right:1px solid #f1f5f9;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#dc2626;margin-bottom:4px;">SERVERS</div>
+      <div style="font-size:36px;font-weight:700;color:#dc2626;line-height:1;">89</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">On-prem VMs + ESXi hosts</div>
+    </div>
+    <div style="background:#fff;padding:20px 22px;text-align:center;border-right:1px solid #f1f5f9;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#d97706;margin-bottom:4px;">NETWORK DEVICES</div>
+      <div style="font-size:36px;font-weight:700;color:#d97706;line-height:1;">43</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Firewalls · Switches · APs</div>
+    </div>
+    <div style="background:#fff;padding:20px 22px;text-align:center;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#0d9488;margin-bottom:4px;">ENDPOINTS</div>
+      <div style="font-size:36px;font-weight:700;color:#0d9488;line-height:1;">54</div>
+      <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Windows 11 workstations</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <!-- Engagement details card -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="background:#1e3a5f;padding:14px 20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">ENGAGEMENT DETAILS</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;">Document &amp; Audit Information</div>
+      </div>
+      <div style="padding:0 20px 4px;">
+        <table style="width:100%;border-collapse:collapse;">
+          <tbody>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0 10px;font-size:11px;font-weight:600;color:#94a3b8;width:38%;text-transform:uppercase;letter-spacing:.5px;">Client</td><td style="padding:10px 0;font-size:12px;color:#0f172a;font-weight:500;">Indorama Ventures Global Shared Services Pvt. Ltd.</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">PO Reference</td><td style="padding:10px 0;font-size:12px;color:#475569;">4500423986 · Dated 06/03/2026</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Report Ref</td><td style="padding:10px 0;font-family:'JetBrains Mono',monospace;font-size:10px;color:#2563eb;">PIPL/25-26/Indorama/VAPT/S1/06052026</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Audit Period</td><td style="padding:10px 0;font-size:12px;color:#475569;">27 March 2026 – 04 May 2026</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Report Date</td><td style="padding:10px 0;font-size:12px;color:#475569;">06 May 2026 · Version 1.0</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Prepared By</td><td style="padding:10px 0;font-size:12px;color:#475569;">Mr. Spandan Manna · Cyber Security Analyst</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Approved By</td><td style="padding:10px 0;font-size:12px;color:#475569;">Mr. Avijit Dutta · ISO 27001:2022 LA, CISA #15126173</td></tr>
+            <tr style="border-bottom:1px solid #f8fafc;"><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Distributed To</td><td style="padding:10px 0;font-size:12px;color:#475569;">Mr. Bhupesh Sinha · Indorama Ventures GSS</td></tr>
+            <tr><td style="padding:10px 0;font-size:11px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;">Presented To</td><td style="padding:10px 0;font-size:12px;color:#475569;">Mr. Arindam Dutta · Head IT, Indorama Ventures GCC</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Coverage areas card -->
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="background:#1e3a5f;padding:14px 20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">COVERAGE AREAS</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;">Three Domains · Hybrid Infrastructure</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:12px;">
+        <div style="border-radius:8px;overflow:hidden;border:1px solid #fca5a5;">
+          <div style="background:#dc2626;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Servers — 89 Assets</div>
+            <span style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;">CRITICAL RISK</span>
+          </div>
+          <div style="background:#fff7f7;padding:10px 14px;font-size:11px;color:#475569;line-height:1.6;">On-premise VMs: Windows Server 2022/2019/2016, RHEL 8, Ubuntu, VMware Photon OS 4.0. HP ESXi 7.0 U2 hypervisors, HP iLO interfaces. Plus 17 Azure cloud VMs across the hybrid environment.</div>
+        </div>
+        <div style="border-radius:8px;overflow:hidden;border:1px solid #fde047;">
+          <div style="background:#d97706;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Network Infrastructure — 43 Assets</div>
+            <span style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;">MODERATE RISK</span>
+          </div>
+          <div style="background:#fffbeb;padding:10px 14px;font-size:11px;color:#475569;line-height:1.6;">2 PaloAlto PA-1410 (PAN OS 11.1.11), Azure Firewall, Cisco C9500/C9200L switches (IOS 17.x), 22 HP Aruba AP515 WAPs, VPN gateways (TCL, JIO, Azure), public IPs.</div>
+        </div>
+        <div style="border-radius:8px;overflow:hidden;border:1px solid #86efac;">
+          <div style="background:#0d9488;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Endpoints — 54 Assets</div>
+            <span style="background:rgba(255,255,255,.2);color:#fff;font-size:10px;padding:2px 8px;border-radius:3px;font-weight:700;">LOW RISK</span>
+          </div>
+          <div style="background:#f0fdf9;padding:10px 14px;font-size:11px;color:#475569;line-height:1.6;">54 Windows 11 domain-joined workstations (GCCLP*, GBSLP*, SAPLP* naming). Black Box testing for configuration and authentication weaknesses.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Infrastructure context -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="background:#1e3a5f;padding:14px 20px;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">INFRASTRUCTURE CONTEXT</div>
+      <div style="font-size:15px;font-weight:600;color:#fff;">Indorama Ventures GCC — Kolkata, India</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:0;">
+      <div style="padding:18px 20px;border-right:1px solid #f1f5f9;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:#eff6ff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">☁️</div>
+          <div style="font-size:12px;font-weight:600;color:#1e3a5f;">Hybrid Cloud Architecture</div>
+        </div>
+        <div style="font-size:12px;color:#475569;line-height:1.7;">Azure + On-Premise hybrid. Critical workloads on VMware ESXi 7.0. Connectivity via PaloAlto firewalls + redundant VPN gateways (TCL, JIO, Azure).</div>
+      </div>
+      <div style="padding:18px 20px;border-right:1px solid #f1f5f9;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:#fef3c7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">📦</div>
+          <div style="font-size:12px;font-weight:600;color:#1e3a5f;">Enterprise Applications</div>
+        </div>
+        <div style="font-size:12px;color:#475569;line-height:1.7;">SAP, Citrix Virtual Apps &amp; Desktops, DUO MFA, Avaya communications, financial processing systems, and multiple custom application servers.</div>
+      </div>
+      <div style="padding:18px 20px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="width:36px;height:36px;background:#f0fdf4;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;">📋</div>
+          <div style="font-size:12px;font-weight:600;color:#1e3a5f;">Governance Framework</div>
+        </div>
+        <div style="font-size:12px;color:#475569;line-height:1.7;">Security posture governed by CERT-In guidelines, ISO 27001:2022, and enterprise IT governance. SIEM and monitoring (OpMgr, SYSLOG) infrastructure in place.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 0B: APPROACH & METHODOLOGY -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-approach">
+
+  <!-- Testing approach comparison -->
+  <div class="grid-2" style="margin-bottom:16px;">
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="background:#1e3a5f;padding:14px 20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">ASSESSMENT APPROACH</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;">Hybrid Testing Methodology</div>
+      </div>
+      <div style="padding:16px 20px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:32px;height:32px;background:#1e40af;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">GB</div>
+              <div style="font-size:12px;font-weight:600;color:#1e40af;">Grey Box</div>
+            </div>
+            <div style="font-size:11px;color:#1e3a5f;line-height:1.6;">Partial knowledge. IP list provided, no credentials. Applied to <strong>89 servers</strong> + 17 Azure VMs.</div>
+            <div style="margin-top:8px;font-size:10px;color:#3b82f6;font-weight:600;">Simulates informed attacker / insider threat</div>
+          </div>
+          <div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:32px;height:32px;background:#166534;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;">BB</div>
+              <div style="font-size:12px;font-weight:600;color:#166534;">Black Box</div>
+            </div>
+            <div style="font-size:11px;color:#15803d;line-height:1.6;">Zero prior knowledge. Applied to <strong>43 network devices</strong> + <strong>54 endpoints</strong>.</div>
+            <div style="margin-top:8px;font-size:10px;color:#16a34a;font-weight:600;">Simulates external attacker with no intel</div>
+          </div>
+        </div>
+        <div style="background:#fefce8;border:1px solid #fde047;border-radius:6px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+          <div style="width:8px;height:8px;background:#ca8a04;border-radius:50%;flex-shrink:0;"></div>
+          <div style="font-size:11px;color:#713f12;">All testing conducted with prior written authorisation. No production systems disrupted. Critical/high findings manually validated — zero false positives in report.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:0;overflow:hidden;">
+      <div style="background:#1e3a5f;padding:14px 20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">TESTING TOOLKIT</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;">Tools &amp; Standards</div>
+      </div>
+      <div style="padding:16px 20px;display:flex;flex-direction:column;gap:10px;">
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;background:#f8fafc;border-radius:6px;border:0.5px solid #e2e8f0;">
+          <div style="width:36px;height:36px;background:#1e3a5f;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;letter-spacing:-.5px;">NSS</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;color:#0f172a;">Nessus v10.11.3 <span style="background:#dbeafe;color:#1e40af;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:500;">Licensed</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Automated VA scanning · CVE/CVSS mapping · FP elimination</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;background:#f8fafc;border-radius:6px;border:0.5px solid #e2e8f0;">
+          <div style="width:36px;height:36px;background:#0d9488;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">NMP</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;color:#0f172a;">Nmap v7.98 <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:500;">Open Source</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Port scanning · OS detection · Service fingerprinting</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;background:#f8fafc;border-radius:6px;border:0.5px solid #e2e8f0;">
+          <div style="width:36px;height:36px;background:#dc2626;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">KLI</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;color:#0f172a;">Kali Linux v2026.1 <span style="background:#dcfce7;color:#166534;font-size:10px;padding:1px 6px;border-radius:3px;margin-left:4px;font-weight:500;">Open Source</span></div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Manual pentest platform · Exploitation framework · PTES-aligned</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:center;padding:10px 12px;background:#f8fafc;border-radius:6px;border:0.5px solid #e2e8f0;">
+          <div style="width:36px;height:36px;background:#d97706;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">EXP</div>
+          <div style="flex:1;">
+            <div style="font-size:12px;font-weight:600;color:#0f172a;">Manual Expert Testing</div>
+            <div style="font-size:11px;color:#94a3b8;margin-top:2px;">Lateral movement · Privilege escalation · SMB relay · PoC validation</div>
+          </div>
+        </div>
+        <div style="background:#f1f5f9;border-radius:6px;padding:10px 12px;margin-top:2px;">
+          <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px;">Aligned Standards</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;">
+            <span style="background:#1e3a5f;color:#fff;font-size:10px;padding:3px 9px;border-radius:4px;font-weight:600;">CERT-In</span>
+            <span style="background:#1e3a5f;color:#fff;font-size:10px;padding:3px 9px;border-radius:4px;font-weight:600;">PTES</span>
+            <span style="background:#1e3a5f;color:#fff;font-size:10px;padding:3px 9px;border-radius:4px;font-weight:600;">CVSS v3.1</span>
+            <span style="background:#1e3a5f;color:#fff;font-size:10px;padding:3px 9px;border-radius:4px;font-weight:600;">ISO 27001:2022</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Six-step methodology — visual timeline -->
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="background:#1e3a5f;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:2px;">SIX-STEP METHODOLOGY</div>
+        <div style="font-size:15px;font-weight:600;color:#fff;">CERT-In Aligned · PTES Framework · 27 Mar – 4 May 2026</div>
+      </div>
+      <div style="font-size:11px;color:#93c5fd;">39 days · 186 assets · 656 findings</div>
+    </div>
+
+    <!-- Step flow connector bar -->
+    <div style="padding:24px 24px 8px;">
+      <div style="display:flex;align-items:flex-start;gap:0;position:relative;">
+
+        <!-- Step 1 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">01</div>
+          <div style="width:100%;height:2px;background:#e2e8f0;margin-top:-22px;z-index:0;"></div>
+        </div>
+        <!-- Step 2 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#1e3a5f;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">02</div>
+          <div style="width:100%;height:2px;background:#e2e8f0;margin-top:-22px;z-index:0;"></div>
+        </div>
+        <!-- Step 3 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">03</div>
+          <div style="width:100%;height:2px;background:#e2e8f0;margin-top:-22px;z-index:0;"></div>
+        </div>
+        <!-- Step 4 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">04</div>
+          <div style="width:100%;height:2px;background:#e2e8f0;margin-top:-22px;z-index:0;"></div>
+        </div>
+        <!-- Step 5 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">05</div>
+          <div style="width:100%;height:2px;background:#e2e8f0;margin-top:-22px;z-index:0;"></div>
+        </div>
+        <!-- Step 6 -->
+        <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+          <div style="width:44px;height:44px;background:#0d9488;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff;z-index:1;position:relative;">06</div>
+          <div style="width:100%;height:2px;background:transparent;margin-top:-22px;z-index:0;"></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Step cards below the timeline -->
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:0;padding:0 24px 20px;border-top:0 none;">
+      <div style="padding:12px 10px 12px 0;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:5px;">Reconnaissance</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Passive + active asset enumeration. DNS/WHOIS. 186 assets mapped before testing starts.</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">Nmap · OSINT</div>
+      </div>
+      <div style="padding:12px 10px;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#1e3a5f;margin-bottom:5px;">Vulnerability Scan</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Automated Nessus scan. CVE mapping, CVSS scoring, false-positive cross-validation.</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">Nessus v10.11.3</div>
+      </div>
+      <div style="padding:12px 10px;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#dc2626;margin-bottom:5px;">Manual Exploitation</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Expert-led pentest. Lateral movement, priv. escalation, SMB relay, credential harvesting.</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">Kali Linux · PTES</div>
+      </div>
+      <div style="padding:12px 10px;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:5px;">Risk Scoring</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">CVSS v3.1 + business impact overlay. Critical (15d) · High (30d) · Med (90d) · Low (180d).</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">CVSS v3.1</div>
+      </div>
+      <div style="padding:12px 10px;border-right:1px solid #f1f5f9;">
+        <div style="font-size:11px;font-weight:600;color:#d97706;margin-bottom:5px;">PoC Validation</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Controlled proof-of-concept for every critical/high finding. Zero false positives guaranteed.</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">Manual · Controlled</div>
+      </div>
+      <div style="padding:12px 0 12px 10px;">
+        <div style="font-size:11px;font-weight:600;color:#0d9488;margin-bottom:5px;">Reporting</div>
+        <div style="font-size:11px;color:#475569;line-height:1.6;">Executive briefing + 40-page technical report. CVE refs, remediation roadmap, CERT-In format.</div>
+        <div style="margin-top:8px;font-size:10px;color:#64748b;background:#f8fafc;padding:4px 6px;border-radius:3px;">CERT-In · ISO 27001</div>
+      </div>
+    </div>
+
+    <!-- CVSS SLA grid -->
+    <div style="border-top:1px solid #f1f5f9;padding:16px 24px;background:#f8fafc;">
+      <div style="font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.7px;text-transform:uppercase;margin-bottom:12px;">Risk Scoring Framework — CVSS v3.1 Thresholds &amp; Remediation SLAs</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;">
+        <div style="background:#fee2e2;border:1px solid #fca5a5;border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#991b1b;letter-spacing:.5px;margin-bottom:4px;">CRITICAL</div>
+          <div style="font-size:18px;font-weight:700;color:#dc2626;line-height:1;">9.0 – 10.0</div>
+          <div style="font-size:10px;color:#991b1b;margin-top:4px;">Remediate within <strong>15 days</strong></div>
+          <div style="font-size:10px;color:#b91c1c;margin-top:3px;">RCE / full system compromise</div>
+        </div>
+        <div style="background:#ffedd5;border:1px solid #fdba74;border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#9a3412;letter-spacing:.5px;margin-bottom:4px;">HIGH</div>
+          <div style="font-size:18px;font-weight:700;color:#f97316;line-height:1;">7.0 – 8.9</div>
+          <div style="font-size:10px;color:#9a3412;margin-top:4px;">Remediate within <strong>30 days</strong></div>
+          <div style="font-size:10px;color:#c2410c;margin-top:3px;">Privilege escalation / lateral move</div>
+        </div>
+        <div style="background:#fef9c3;border:1px solid #fde047;border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#854d0e;letter-spacing:.5px;margin-bottom:4px;">MEDIUM</div>
+          <div style="font-size:18px;font-weight:700;color:#ca8a04;line-height:1;">4.0 – 6.9</div>
+          <div style="font-size:10px;color:#854d0e;margin-top:4px;">Remediate within <strong>90 days</strong></div>
+          <div style="font-size:10px;color:#a16207;margin-top:3px;">Conditional exploitation risk</div>
+        </div>
+        <div style="background:#dbeafe;border:1px solid #93c5fd;border-radius:6px;padding:12px;text-align:center;">
+          <div style="font-size:10px;font-weight:700;color:#1e40af;letter-spacing:.5px;margin-bottom:4px;">LOW</div>
+          <div style="font-size:18px;font-weight:700;color:#2563eb;line-height:1;">0.1 – 3.9</div>
+          <div style="font-size:10px;color:#1e40af;margin-top:4px;">Remediate within <strong>180 days</strong></div>
+          <div style="font-size:10px;color:#1d4ed8;margin-top:3px;">Informational / hardening</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<div class="page active fade-in" id="page-overview">
+  <div class="alert-banner">
+    <span class="alert-icon">⚠</span>
+    <span><strong>Leadership Action Required:</strong> 60 Critical vulnerabilities — all open. CERT-In mandates remediation within 15 days. Server estate carries 89% of all findings and 100% of critical vulnerabilities. Risk of ransomware deployment and full infrastructure takeover is present and non-theoretical.</span>
+  </div>
+
+  <!-- KPI Strip -->
+  <div class="grid-5" style="margin-top:0;">
+    <div class="card-sm">
+      <div class="kpi-label">Total Findings</div>
+      <div class="kpi-value kpi-white">656</div>
+      <div class="kpi-sub">All open — no closures yet</div>
+    </div>
+    <div class="card-sm">
+      <div class="kpi-label">Critical</div>
+      <div class="kpi-value kpi-red">60</div>
+      <div class="kpi-sub" style="color:rgba(252,165,165,.8);">All in server estate</div>
+    </div>
+    <div class="card-sm">
+      <div class="kpi-label">High</div>
+      <div class="kpi-value kpi-amber">222</div>
+      <div class="kpi-sub">Predominantly server-side</div>
+    </div>
+    <div class="card-sm">
+      <div class="kpi-label">Medium</div>
+      <div class="kpi-value" style="color:#fde68a;">331</div>
+      <div class="kpi-sub">Across all domains</div>
+    </div>
+    <div class="card-sm">
+      <div class="kpi-label">Assets Assessed</div>
+      <div class="kpi-value kpi-teal">186</div>
+      <div class="kpi-sub">89 servers · 54 EP · 43 net</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <!-- Donut -->
+    <div class="card fade-in-2">
+      <div class="card-title">Risk Severity Distribution</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="donutChart" role="img" aria-label="Donut chart: Critical 60, High 222, Medium 331, Low 43. Critical and High represent 43% of all 656 findings.">Critical 60, High 222, Medium 331, Low 43.</canvas>
+      </div>
+      <div class="chart-legend">
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span>Critical 60 (9%)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f97316;"></span>High 222 (34%)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span>Medium 331 (50%)</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span>Low 43 (7%)</span>
+      </div>
+    </div>
+
+    <!-- Domain Bar -->
+    <div class="card fade-in-2">
+      <div class="card-title">Findings by Domain</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="domainChart" role="img" aria-label="Horizontal bar chart: Servers 583 findings including 60 critical, Network 52 findings, Endpoints 21 findings.">Servers 583 (60C/222H/279M/22L), Network 52 (0C/0H/31M/21L), Endpoints 21 (0C/0H/21M/0L).</canvas>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3);">Server estate: <strong style="color:#fca5a5;">89%</strong> of all findings &amp; <strong style="color:#fca5a5;">100%</strong> of critical vulnerabilities</div>
+    </div>
+
+    <!-- Domain Risk Cards -->
+    <div class="card fade-in-2" style="display:flex;flex-direction:column;gap:10px;">
+      <div class="card-title">Domain Risk Levels</div>
+      <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);border-radius:6px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:600;color:#fca5a5;margin-bottom:4px;">🖥️ Servers — CRITICAL</div>
+        <div style="font-size:11px;color:var(--text2);">583 findings · 60 Critical · 222 High<br>Operational Disruption + Infrastructure Takeover Risk</div>
+      </div>
+      <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);border-radius:6px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:600;color:#fde68a;margin-bottom:4px;">🔌 Network — MODERATE</div>
+        <div style="font-size:11px;color:var(--text2);">52 findings · 0 Critical · 0 High<br>Lateral Movement Risk (Telnet, weak SSH)</div>
+      </div>
+      <div style="background:rgba(20,184,166,.08);border:1px solid rgba(20,184,166,.2);border-radius:6px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:600;color:var(--teal2);margin-bottom:4px;">💻 Endpoints — LOW</div>
+        <div style="font-size:11px;color:var(--text2);">21 findings · 0 Critical · 0 High<br>SMB Signing not enforced (54 endpoints)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Business Impact -->
+  <div class="grid-2">
+    <div class="card fade-in-3">
+      <div class="card-title">Business Impact Exposure</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="radarChart" role="img" aria-label="Radar showing risk exposure across 6 business domains. Server infrastructure highest, followed by data exfiltration risk.">Server Infrastructure 90, Data Exfiltration 80, Regulatory Risk 70, Application Layer 75, Network/Lateral 60, Endpoint 35.</canvas>
+      </div>
+    </div>
+    <div class="card fade-in-3">
+      <div class="card-title">Key Leadership Observations</div>
+      <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px;">
+        <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(239,68,68,.06);border-radius:5px;border-left:3px solid #ef4444;">
+          <div style="flex:1;font-size:12px;color:var(--text2);">Server estate drives <strong style="color:#fca5a5;">&gt;85%</strong> of overall enterprise risk exposure</div>
+        </div>
+        <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(249,115,22,.06);border-radius:5px;border-left:3px solid #f97316;">
+          <div style="flex:1;font-size:12px;color:var(--text2);">Patch governance gaps and legacy software (Office, SQL Server, .NET Core) creating persistent exploit vectors</div>
+        </div>
+        <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(249,115,22,.06);border-radius:5px;border-left:3px solid #f97316;">
+          <div style="flex:1;font-size:12px;color:var(--text2);">Weak encryption (SWEET32, TLS 1.0/1.1) across <strong style="color:#fdba74;">40+ servers</strong> — protocol downgrade risk</div>
+        </div>
+        <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(245,158,11,.06);border-radius:5px;border-left:3px solid #f59e0b;">
+          <div style="flex:1;font-size:12px;color:var(--text2);">SMB Signing not enforced — NTLM relay attacks possible across server estate &amp; all 54 endpoints</div>
+        </div>
+        <div style="display:flex;gap:10px;padding:9px 12px;background:rgba(20,184,166,.06);border-radius:5px;border-left:3px solid #14b8a6;">
+          <div style="flex:1;font-size:12px;color:var(--text2);">PaloAlto firewalls &amp; Cisco switches record <strong style="color:var(--teal2);">zero</strong> Critical/High findings — strong perimeter security</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: CRITICAL FINDINGS -->
+<div class="page" id="page-findings">
+  <div style="background:#fef2f2;border:1px solid #fca5a5;border-left:4px solid #dc2626;border-radius:6px;padding:12px 16px;font-size:12px;color:#991b1b;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+    <div style="width:20px;height:20px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">!</div>
+    All findings below are <strong style="margin:0 3px;">Open</strong> and manually validated as actively exploitable. CERT-In SLA for Critical: 15 days.
+  </div>
+  <div class="card" style="margin-bottom:16px;padding:0;overflow:hidden;">
+    <div style="background:#1e3a5f;padding:14px 20px;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:15px;font-weight:600;color:#fff;">Critical &amp; High-Impact Findings — Validated &amp; Exploitable</div>
+      <div style="display:flex;gap:8px;">
+        <span style="background:#dc2626;color:#fff;font-size:10px;padding:3px 10px;border-radius:4px;font-weight:700;">60 CRITICAL</span>
+        <span style="background:#d97706;color:#fff;font-size:10px;padding:3px 10px;border-radius:4px;font-weight:700;">222 HIGH</span>
+        <span style="background:rgba(255,255,255,.15);color:#fff;font-size:10px;padding:3px 10px;border-radius:4px;">ALL OPEN</span>
+      </div>
+    </div>
+    <table class="findings-table">
+      <thead><tr><th style="width:4%;">#</th><th style="width:13%;">Severity</th><th style="width:22%;">Finding</th><th style="width:18%;">Affected Assets</th><th style="width:31%;">Business Risk</th><th style="width:12%;">Status</th></tr></thead>
+      <tbody>
+        <tr><td style="color:#94a3b8;font-size:11px;">01</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">Apache Struts 2 RCE</td><td><span class="asset-name">DUO01, HSD46, JUM02, SCA01</span></td><td style="font-size:12px;color:#475569;">Complete server takeover without authentication. Direct ransomware deployment vector. Manually confirmed exploitable in current environment.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">02</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">VMware ESXi 7.0 — VMSA-2025-0013</td><td><span class="asset-name">DMZ-ESX01, DMZ-ESX02</span></td><td style="font-size:12px;color:#475569;">Hypervisor-level compromise enabling full VM escape. Every virtual machine on these hosts exposed by a single exploit.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">03</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">Microsoft Office — Unsupported (EOL)</td><td><span class="asset-name">15+ HSD servers + AZ-RDP01</span></td><td style="font-size:12px;color:#475569;">End-of-life software receives zero security patches. Permanent exploit exposure via document-based RCE until decommissioned.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">04</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">Photon OS 4.0 — Multi-CVE (Docker, Samba, GLib)</td><td><span class="asset-name">IVGSS-DC-VCV01 (vCenter)</span></td><td style="font-size:12px;color:#475569;">vCenter compromise enabling full virtualisation infrastructure takeover. Lateral movement to all hosted VMs. 15+ critical advisories simultaneously open.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">05</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">ASP.NET Core / .NET Core — Security EOL</td><td><span class="asset-name">10 Azure VMs</span></td><td style="font-size:12px;color:#475569;">Application layer permanently unpatched. Financial processing and shared services on Azure exposed to public exploits with no vendor fix available.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">06</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">RHEL 8 — 25+ Critical CVEs</td><td><span class="asset-name">IVGSS-DC-RIN (10.86.10.16)</span></td><td style="font-size:12px;color:#475569;">Linux server with critical vulnerabilities in kernel, libarchive, net-snmp, bzip2, Firefox. Multiple remote exploitation pathways confirmed.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">07</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">Microsoft SQL Server — EOL Version</td><td><span class="asset-name">IVGSS-DC-EY</span></td><td style="font-size:12px;color:#475569;">End-of-life database server with no security patches. Financial and operational data at immediate risk of unauthorised access and extraction.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">08</td><td><span class="sev sev-critical">● Critical</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">Sophos Intercept X — EDR Detection Gap</td><td><span class="asset-name">IVGSS-DC-HSD72</span></td><td style="font-size:12px;color:#475569;">EDR protection failure — this host is invisible to the security monitoring stack. Attackers can operate here without triggering any alert.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">09</td><td><span class="sev sev-high">▲ High</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">SSL SWEET32 — Medium Cipher Suites</td><td><span class="asset-name">40+ servers</span></td><td style="font-size:12px;color:#475569;">3DES and RC4 cipher suites active across server estate. Long-lived sessions vulnerable to birthday attacks — encrypted traffic decipherable by network observers.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+        <tr><td style="color:#94a3b8;font-size:11px;">10</td><td><span class="sev sev-high">▲ High</span></td><td style="font-size:12px;font-weight:600;color:#0f172a;">SMB Shares — Unprivileged Access</td><td><span class="asset-name">IVGSS-DC-BKP01</span></td><td style="font-size:12px;color:#475569;">Backup server accessible via SMB without authentication — the primary ransomware target. Encrypting backups ensures no recovery path post-attack.</td><td><span class="status status-open"><span class="status-dot"></span>Open</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden;">
+    <div style="background:#1e3a5f;padding:12px 20px;"><div style="font-size:13px;font-weight:600;color:#fff;">High-Risk Finding Categories — Distribution</div></div>
+    <div style="padding:16px 20px;"><div style="position:relative;height:180px;"><canvas id="catChart" role="img" aria-label="Horizontal bar: Unpatched 89, Misconfiguration 67, Exposed Services 43, Weak Credentials 23."></canvas></div></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 3: TOP CVEs -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-cves">
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-title">Top Critical CVEs — Server Estate (All Unpatched)</div>
+      <table class="cve-table">
+        <thead>
+          <tr>
+            <th>CVE ID</th>
+            <th>Component</th>
+            <th>CVSS</th>
+            <th>Business Impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2013-2251</td>
+            <td style="color:var(--text2);">Apache Struts 2</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">Remote Code Execution</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2016-4438</td>
+            <td style="color:var(--text2);">Apache Struts 2 REST</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">RCE via OGNL Expression</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2025-41236/37/38/39</td>
+            <td style="color:var(--text2);">VMware ESXi 7.0</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">VM Escape / Hypervisor RCE</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2024-41110</td>
+            <td style="color:var(--text2);">Photon OS 4.0: Docker</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">Container Escape / Takeover</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2025-10230</td>
+            <td style="color:var(--text2);">Photon OS 4.0: Samba</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">RCE on vCenter Host</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2019-12900</td>
+            <td style="color:var(--text2);">RHEL 8: bzip2</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">Arbitrary Code Execution</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2018-11776</td>
+            <td style="color:var(--text2);">Apache Struts 2 S2-057</td>
+            <td><span class="cvss-pill cvss-9">9.8</span></td>
+            <td style="font-size:11px;color:var(--text3);">Namespace RCE (remote)</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2026-2761 / 2768</td>
+            <td style="color:var(--text2);">RHEL 8: Firefox</td>
+            <td><span class="cvss-pill cvss-9">9.1</span></td>
+            <td style="font-size:11px;color:var(--text3);">Browser-based Code Exec</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-2016-2183</td>
+            <td style="color:var(--text2);">SSL SWEET32 (3DES/RC4)</td>
+            <td><span class="cvss-pill cvss-8">7.5</span></td>
+            <td style="font-size:11px;color:var(--text3);">Cipher Downgrade / MITM</td>
+          </tr>
+          <tr>
+            <td style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--blue2);">CVE-1999-0519 / 0520</td>
+            <td style="color:var(--text2);">Windows SMB: BKP01</td>
+            <td><span class="cvss-pill cvss-8">7.5</span></td>
+            <td style="font-size:11px;color:var(--text3);">Unauthenticated Backup Access</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <div class="card-title">CVE Risk Landscape — CVSS Score Distribution</div>
+      <div style="position:relative;height:200px;">
+        <canvas id="cvssChart" role="img" aria-label="Bar chart showing count of vulnerabilities by CVSS score band. CVSS 9-10 has 25 findings, CVSS 7-8.9 has 197, CVSS 4-6.9 has 331, below 4 has 43.">CVSS 9-10: 25, CVSS 7-8.9: 197, CVSS 4-6.9: 331, CVSS 0-3.9: 43.</canvas>
+      </div>
+      <div style="margin-top:16px;">
+        <div class="card-title">Network &amp; Endpoint CVEs</div>
+        <table class="cve-table">
+          <thead><tr><th>Finding</th><th>Severity</th><th>Assets</th></tr></thead>
+          <tbody>
+            <tr>
+              <td style="font-size:11px;color:var(--text2);">Unencrypted Telnet (3 switches)</td>
+              <td><span class="sev sev-medium" style="font-size:10px;">Medium</span></td>
+              <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue2);">10.86.100.8–10</td>
+            </tr>
+            <tr>
+              <td style="font-size:11px;color:var(--text2);">SSH Terrapin CVE-2023-48795 (28 APs + switches)</td>
+              <td><span class="sev sev-medium" style="font-size:10px;">Medium</span></td>
+              <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue2);">Multiple WAPs</td>
+            </tr>
+            <tr>
+              <td style="font-size:11px;color:var(--text2);">SMB Signing Not Required (21 endpoints)</td>
+              <td><span class="sev sev-medium" style="font-size:10px;">Medium</span></td>
+              <td style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--blue2);">54 endpoints</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- Azure Compliance -->
+  <div class="card">
+    <div class="card-title">Azure Cloud Security Benchmark — Compliance Status</div>
+    <table class="cve-table">
+      <thead><tr><th>Control Area</th><th>Status</th><th>Gap Identified</th><th>Required Action</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="color:var(--text2);">Identity &amp; Access Management</td>
+          <td><span style="color:#fde68a;font-size:12px;font-weight:600;">Partial</span></td>
+          <td style="font-size:11px;color:var(--text3);">MFA not enforced for all admin accounts</td>
+          <td style="font-size:11px;color:var(--text2);">Enforce MFA via Conditional Access</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text2);">Network Security</td>
+          <td><span style="color:var(--teal2);font-size:12px;font-weight:600;">Compliant</span></td>
+          <td style="font-size:11px;color:var(--text3);">None identified</td>
+          <td style="font-size:11px;color:var(--text2);">Maintain current controls</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text2);">Data Protection</td>
+          <td><span style="color:#fde68a;font-size:12px;font-weight:600;">Partial</span></td>
+          <td style="font-size:11px;color:var(--text3);">Encryption at rest not enabled on all storage</td>
+          <td style="font-size:11px;color:var(--text2);">Enable Azure Storage Service Encryption</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text2);">Logging &amp; Monitoring</td>
+          <td><span style="color:#fca5a5;font-size:12px;font-weight:600;">Non-Compliant</span></td>
+          <td style="font-size:11px;color:var(--text3);">Incomplete audit log coverage across subscriptions</td>
+          <td style="font-size:11px;color:var(--text2);">Enable Defender for Cloud across all subscriptions</td>
+        </tr>
+        <tr>
+          <td style="color:var(--text2);">Incident Response</td>
+          <td><span style="color:#fde68a;font-size:12px;font-weight:600;">Partial</span></td>
+          <td style="font-size:11px;color:var(--text3);">No documented cloud IR playbook</td>
+          <td style="font-size:11px;color:var(--text2);">Develop and test cloud-specific IR procedures</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 4: ATTACK SURFACE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-surface">
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Attack Surface by Category</div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(239,68,68,.12);">🖥️</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">Windows Servers (EOL/Unpatched)</span><span style="font-size:12px;color:var(--text3);">~340 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:100%;background:#ef4444;"></div></div>
+        </div>
+      </div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(239,68,68,.1);">⚙️</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">VMware ESXi / Photon OS (vCenter)</span><span style="font-size:12px;color:var(--text3);">~85 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:85%;background:#ef4444;"></div></div>
+        </div>
+      </div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(249,115,22,.1);">🐧</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">RHEL 8 / Ubuntu Linux</span><span style="font-size:12px;color:var(--text3);">~100 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:90%;background:#ef4444;"></div></div>
+        </div>
+      </div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(59,130,246,.1);">☁️</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">Azure Cloud VMs (17 VMs)</span><span style="font-size:12px;color:var(--text3);">~58 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:60%;background:#3b82f6;"></div></div>
+        </div>
+      </div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(245,158,11,.1);">🔌</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">Network (Switches, APs, Firewalls)</span><span style="font-size:12px;color:var(--text3);">52 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:28%;background:#f59e0b;"></div></div>
+        </div>
+      </div>
+      <div class="surface-item">
+        <div class="surface-icon" style="background:rgba(20,184,166,.1);">💻</div>
+        <div class="surface-bar-wrap">
+          <div style="display:flex;justify-content:space-between;"><span class="surface-label">Endpoints (54 × Windows 11)</span><span style="font-size:12px;color:var(--text3);">21 findings</span></div>
+          <div class="progress-track" style="margin-top:5px;"><div class="progress-fill" style="width:15%;background:#14b8a6;"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Vulnerability Theme Distribution</div>
+      <div style="position:relative;height:280px;">
+        <canvas id="themeChart" role="img" aria-label="Polar area chart of vulnerability themes. Patch/EOL Software is largest, followed by Weak Encryption and Misconfiguration.">Patch/EOL Software 222, Weak Encryption/Protocols 120, Misconfiguration 67, SMB/Auth Gaps 62, Exposed Services 43, Cloud Config 25, Other 117.</canvas>
+      </div>
+      <div class="chart-legend" style="margin-top:14px;">
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span>Patch/EOL</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f97316;"></span>Weak Encryption</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#f59e0b;"></span>Misconfiguration</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#3b82f6;"></span>SMB/Auth</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6;"></span>Exposed Services</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#14b8a6;"></span>Cloud Config</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:0;">
+    <div class="card">
+      <div class="card-title">Network — Detailed Findings</div>
+      <table class="cve-table">
+        <thead><tr><th>Finding</th><th>Severity</th><th>Devices</th></tr></thead>
+        <tbody>
+          <tr><td style="font-size:11px;color:var(--text2);">Telnet Protocol Enabled</td><td><span class="sev sev-medium" style="font-size:10px;">Med</span></td><td style="font-size:11px;color:var(--text3);">3 switches</td></tr>
+          <tr><td style="font-size:11px;color:var(--text2);">SSH Terrapin (CVE-2023-48795)</td><td><span class="sev sev-medium" style="font-size:10px;">Med</span></td><td style="font-size:11px;color:var(--text3);">28 APs + switches</td></tr>
+          <tr><td style="font-size:11px;color:var(--text2);">SSH Server CBC Mode Ciphers</td><td><span class="sev sev-low" style="font-size:10px;">Low</span></td><td style="font-size:11px;color:var(--text3);">22 APs</td></tr>
+        </tbody>
+      </table>
+      <div class="positive-box" style="margin-top:12px;">
+        <div class="positive-title">✓ Positive: Zero Critical/High in Network</div>
+        <div class="positive-body">PaloAlto PA-1410 firewalls and Cisco C9500/C9200 switches show zero critical or high findings — strong perimeter configuration.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Endpoint — Detailed Findings</div>
+      <table class="cve-table">
+        <thead><tr><th>Finding</th><th>Severity</th><th>Endpoints</th></tr></thead>
+        <tbody>
+          <tr><td style="font-size:11px;color:var(--text2);">SMB Signing Not Required</td><td><span class="sev sev-medium" style="font-size:10px;">Med</span></td><td style="font-size:11px;color:var(--text3);">54 endpoints</td></tr>
+        </tbody>
+      </table>
+      <div class="positive-box" style="margin-top:12px;">
+        <div class="positive-title">✓ Positive: Most Mature Domain</div>
+        <div class="positive-body">Endpoint controls (Windows 11, consistent configuration) are the strongest security domain. Zero critical or high findings across 54 assessed endpoints.</div>
+      </div>
+      <div class="positive-box">
+        <div class="positive-title">✓ Network Segmentation in Place</div>
+        <div class="positive-body">No evidence of flat network architecture. Segmentation fundamentals reduce blast radius from server-side breaches.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">OS Coverage — 89 Servers</div>
+      <div style="position:relative;height:220px;">
+        <canvas id="osChart" role="img" aria-label="Horizontal bar chart: Windows Server 2022 approximately 50 servers, Windows 2019 approximately 10, Windows 2016 approximately 10, RHEL 8 approximately 4, VMware Photon OS 4.0 approximately 2, Ubuntu approximately 2.">WinSrv 2022: ~50, WinSrv 2019: ~10, WinSrv 2016: ~10, RHEL 8: 4, Photon OS 4.0: 2, Ubuntu: 1.</canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 5: ATTACKER KILL CHAIN -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-killchain">
+  <div class="alert-banner">
+    <span class="alert-icon">⚠</span>
+    <span>This is not a theoretical scenario. Estimated time from initial compromise to domain takeover: <strong>under 4 hours</strong> based on current vulnerability exposure. All steps below leverage confirmed, open vulnerabilities.</span>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">Step-by-Step Attack Narrative</div>
+      <div class="kc-step">
+        <div class="kc-num" style="background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);">01</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fca5a5;">Initial Compromise</div>
+          <div class="kc-desc">Attacker exploits unpatched Apache Struts 2 RCE (CVE-2013-2251 / CVE-2018-11776) on internet-exposed application servers. Remote code execution achieved without credentials. Affected: DUO01, HSD46, JUM02, SCA01.</div>
+        </div>
+      </div>
+      <div class="kc-step">
+        <div class="kc-num" style="background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);">02</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fca5a5;">Privilege Escalation</div>
+          <div class="kc-desc">Attacker leverages Windows Print Spooler (PrintNightmare, CVE-2021-34527) and Windows Unquoted Service Path (CVE-2014-0759) to escalate from standard user to SYSTEM-level privileges on domain-joined servers.</div>
+        </div>
+      </div>
+      <div class="kc-step">
+        <div class="kc-num" style="background:rgba(249,115,22,.2);color:#fdba74;border:1px solid rgba(249,115,22,.3);">03</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fdba74;">Lateral Movement</div>
+          <div class="kc-desc">Using harvested credentials and NTLM relay attacks — enabled by SMB Signing not enforced across 40+ servers and all 54 endpoints — attacker moves laterally across the entire server estate.</div>
+        </div>
+      </div>
+      <div class="kc-step">
+        <div class="kc-num" style="background:rgba(249,115,22,.2);color:#fdba74;border:1px solid rgba(249,115,22,.3);">04</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fdba74;">Domain Compromise</div>
+          <div class="kc-desc">Attacker reaches Domain Controller, extracts Active Directory credentials, and achieves full domain administrator access. Backup server (BKP01) accessible without authentication — primary ransomware target.</div>
+        </div>
+      </div>
+      <div class="kc-step">
+        <div class="kc-num" style="background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);">05</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fca5a5;">Data Exfiltration</div>
+          <div class="kc-desc">Financial records, ERP credentials, SAP data, employee PII, and operational databases exfiltrated to attacker infrastructure. Encrypted TLS 1.0 channels (SWEET32) allow exfiltration without detection.</div>
+        </div>
+      </div>
+      <div class="kc-step" style="border-bottom:none;">
+        <div class="kc-num" style="background:rgba(239,68,68,.2);color:#fca5a5;border:1px solid rgba(239,68,68,.3);">06</div>
+        <div class="kc-body">
+          <div class="kc-title" style="color:#fca5a5;">Business Disruption</div>
+          <div class="kc-desc">Ransomware deployed across enterprise. ERP systems, file servers, and backup infrastructure encrypted. GCC operations halted. Shared services delivery to global business units disrupted. HSD72 (Sophos gap) — no EDR alert fires.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title">External Threat Intelligence Context</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="padding:10px 12px;background:rgba(239,68,68,.06);border-radius:5px;border-left:3px solid #ef4444;">
+            <div style="font-size:12px;font-weight:600;color:#fca5a5;margin-bottom:3px;">🔴 Ransomware Groups Targeting VMware</div>
+            <div style="font-size:11px;color:var(--text2);">LockBit 3.0 and BlackCat/ALPHV have published exploits for VMware vCenter vulnerabilities identical to those found in this assessment. Active in-the-wild exploitation confirmed.</div>
+          </div>
+          <div style="padding:10px 12px;background:rgba(249,115,22,.06);border-radius:5px;border-left:3px solid #f97316;">
+            <div style="font-size:12px;font-weight:600;color:#fdba74;margin-bottom:3px;">🟠 Manufacturing &amp; ERP Attacks Rising</div>
+            <div style="font-size:11px;color:var(--text2);">Industrial conglomerates are high-value ransomware targets. 2024: Asian manufacturing conglomerate hit via unpatched VMware — 3-week outage, $12M recovery cost.</div>
+          </div>
+          <div style="padding:10px 12px;background:rgba(249,115,22,.06);border-radius:5px;border-left:3px solid #f97316;">
+            <div style="font-size:12px;font-weight:600;color:#fdba74;margin-bottom:3px;">🟠 SMB Relay Attacks Ubiquitous</div>
+            <div style="font-size:11px;color:var(--text2);">2024: Global logistics firm breached via SMB relay attack — AD fully compromised within 6 hours. This exact attack path exists in Indorama's current environment.</div>
+          </div>
+          <div style="padding:10px 12px;background:rgba(245,158,11,.06);border-radius:5px;border-left:3px solid #f59e0b;">
+            <div style="font-size:12px;font-weight:600;color:#fde68a;margin-bottom:3px;">🟡 ManageEngine &amp; Legacy Windows Exploitation</div>
+            <div style="font-size:11px;color:var(--text2);">2025: ERP provider breached via ManageEngine RCE — 40+ enterprise clients affected. 2025: Regional bank domain takeover via legacy Windows Server — $8M regulatory fine.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Business Impact Categories</div>
+        <div style="position:relative;height:200px;">
+          <canvas id="impactChart" role="img" aria-label="Horizontal bar showing business impact categories. Ransomware/Operational Disruption highest, followed by Data Exfiltration and Regulatory Exposure.">Ransomware/Ops Disruption 90, Data Exfiltration 80, Privilege Escalation 75, Regulatory Risk 70, Supply Chain 50, Reputational 60.</canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 6: ASSET INVENTORY -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-assets">
+  <div class="grid-4" style="margin-bottom:16px;">
+    <div class="card-sm" style="text-align:center;">
+      <div class="kpi-label">Servers</div>
+      <div class="kpi-value kpi-red">89</div>
+      <div class="kpi-sub">On-prem VMs + HP ESXi</div>
+    </div>
+    <div class="card-sm" style="text-align:center;">
+      <div class="kpi-label">Azure VMs</div>
+      <div class="kpi-value kpi-amber">17</div>
+      <div class="kpi-sub">Hybrid cloud workloads</div>
+    </div>
+    <div class="card-sm" style="text-align:center;">
+      <div class="kpi-label">Network Devices</div>
+      <div class="kpi-value kpi-teal">43</div>
+      <div class="kpi-sub">Firewalls · Switches · APs</div>
+    </div>
+    <div class="card-sm" style="text-align:center;">
+      <div class="kpi-label">Endpoints</div>
+      <div class="kpi-value kpi-blue">54</div>
+      <div class="kpi-sub">Windows 11 workstations</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:0;">Top Affected Server Systems — By Risk Priority</div>
+      <div style="font-size:11px;color:var(--text4);">P1 = Immediate · P2 = High</div>
+    </div>
+    <table class="findings-table">
+      <thead>
+        <tr>
+          <th>Server / System</th>
+          <th>OS / Platform</th>
+          <th>Critical</th>
+          <th>High</th>
+          <th>Medium</th>
+          <th>Risk Priority</th>
+          <th>Risk Score</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-VCV01 (vCenter)</span></td>
+          <td style="font-size:12px;color:var(--text2);">VMware Photon OS 4.0</td>
+          <td style="font-weight:700;color:#fca5a5;">15+</td>
+          <td style="color:#fdba74;">20+</td>
+          <td style="color:#fde68a;">15</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">98</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-RIN (10.86.10.16)</span></td>
+          <td style="font-size:12px;color:var(--text2);">RHEL 8 (Red Hat Linux)</td>
+          <td style="font-weight:700;color:#fca5a5;">25+</td>
+          <td style="color:#fdba74;">40+</td>
+          <td style="color:#fde68a;">35+</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">95</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DMZ-ESX01/02</span></td>
+          <td style="font-size:12px;color:var(--text2);">VMware ESXi 7.0 U2 (HP)</td>
+          <td style="font-weight:700;color:#fca5a5;">4</td>
+          <td style="color:#fdba74;">—</td>
+          <td style="color:#fde68a;">—</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">92</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-HSD46/47/52</span></td>
+          <td style="font-size:12px;color:var(--text2);">Windows Server 2019</td>
+          <td style="font-weight:700;color:#fca5a5;">3</td>
+          <td style="color:#fdba74;">12+</td>
+          <td style="color:#fde68a;">15+</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">85</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-JUM02 (Jump Server)</span></td>
+          <td style="font-size:12px;color:var(--text2);">Windows Server 2016+</td>
+          <td style="font-weight:700;color:#fca5a5;">2</td>
+          <td style="color:#fdba74;">10+</td>
+          <td style="color:#fde68a;">10+</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">78</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-EY (SQL Server EOL)</span></td>
+          <td style="font-size:12px;color:var(--text2);">Windows Server 2016</td>
+          <td style="font-weight:700;color:#fca5a5;">1</td>
+          <td style="color:#fdba74;">5+</td>
+          <td style="color:#fde68a;">8+</td>
+          <td><span class="status status-open"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#ef4444;">70</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-BKP01 (Backup)</span></td>
+          <td style="font-size:12px;color:var(--text2);">VMware ESXi 7.0 U2</td>
+          <td style="font-weight:700;color:#fca5a5;">—</td>
+          <td style="color:#fdba74;">1</td>
+          <td style="color:#fde68a;">—</td>
+          <td><span class="status status-progress"><span class="status-dot"></span>P1 Immediate</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#f97316;">65</span></td>
+        </tr>
+        <tr>
+          <td><span class="asset-name">IVGSS-DC-SQL01 (DB Server)</span></td>
+          <td style="font-size:12px;color:var(--text2);">Windows Server 2019</td>
+          <td style="font-weight:700;color:#fca5a5;">—</td>
+          <td style="color:#fdba74;">3</td>
+          <td style="color:#fde68a;">5</td>
+          <td><span class="status status-progress"><span class="status-dot"></span>P2 High</span></td>
+          <td><span style="font-size:14px;font-weight:700;color:#f97316;">55</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="info-banner">
+    <span>⚠</span>
+    <span><strong>Windows Server 2012 R2 note:</strong> Any 2012 R2 systems remaining in the estate reached end-of-life in October 2023. Continued operation without Extended Security Updates represents a critical compliance and regulatory risk under ISO 27001 A.8.19.</span>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 7: SECURITY MATURITY -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-maturity">
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-title">Security Maturity — Current vs 12-Month Target (Scale 1–5)</div>
+      <div style="position:relative;height:280px;">
+        <canvas id="maturityChart" role="img" aria-label="Radar chart showing current maturity vs target maturity. Vulnerability Management current 1.5, target 3.5. Patch Management current 1.5, target 3.5. IAM current 2.5, target 4.0. Network Security current 3.0, target 4.0. Endpoint Security current 3.0, target 4.0.">Current: VM 1.5, PM 1.5, IAM 2.5, Net 3.0, EP 3.0. Target: VM 3.5, PM 3.5, IAM 4.0, Net 4.0, EP 4.0.</canvas>
+      </div>
+      <div class="chart-legend" style="margin-top:12px;">
+        <span class="legend-item"><span class="legend-dot" style="background:#ef4444;"></span>Current State</span>
+        <span class="legend-item"><span class="legend-dot" style="background:#14b8a6;"></span>12-Month Target</span>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Maturity Gap Analysis</div>
+      <div style="padding-top:8px;">
+        <div class="mat-row">
+          <div class="mat-label">Vulnerability Management</div>
+          <div class="mat-bar-wrap">
+            <div class="mat-bar-bg" style="flex:1;">
+              <div class="mat-bar-fill" style="width:30%;background:#ef4444;"></div>
+            </div>
+            <div class="mat-scores">1.5 → <strong style="color:var(--teal2);">3.5</strong> &nbsp;<span style="color:var(--text4);">Gap: 2.0</span></div>
+          </div>
+        </div>
+        <div class="mat-row">
+          <div class="mat-label">Patch Management</div>
+          <div class="mat-bar-wrap">
+            <div class="mat-bar-bg" style="flex:1;">
+              <div class="mat-bar-fill" style="width:30%;background:#ef4444;"></div>
+            </div>
+            <div class="mat-scores">1.5 → <strong style="color:var(--teal2);">3.5</strong> &nbsp;<span style="color:var(--text4);">Gap: 2.0</span></div>
+          </div>
+        </div>
+        <div class="mat-row">
+          <div class="mat-label">Identity &amp; Access Mgmt</div>
+          <div class="mat-bar-wrap">
+            <div class="mat-bar-bg" style="flex:1;">
+              <div class="mat-bar-fill" style="width:50%;background:#f97316;"></div>
+            </div>
+            <div class="mat-scores">2.5 → <strong style="color:var(--teal2);">4.0</strong> &nbsp;<span style="color:var(--text4);">Gap: 1.5</span></div>
+          </div>
+        </div>
+        <div class="mat-row">
+          <div class="mat-label">Network Security</div>
+          <div class="mat-bar-wrap">
+            <div class="mat-bar-bg" style="flex:1;">
+              <div class="mat-bar-fill" style="width:60%;background:#f59e0b;"></div>
+            </div>
+            <div class="mat-scores">3.0 → <strong style="color:var(--teal2);">4.0</strong> &nbsp;<span style="color:var(--text4);">Gap: 1.0</span></div>
+          </div>
+        </div>
+        <div class="mat-row" style="border-bottom:none;">
+          <div class="mat-label">Endpoint Security</div>
+          <div class="mat-bar-wrap">
+            <div class="mat-bar-bg" style="flex:1;">
+              <div class="mat-bar-fill" style="width:60%;background:#f59e0b;"></div>
+            </div>
+            <div class="mat-scores">3.0 → <strong style="color:var(--teal2);">4.0</strong> &nbsp;<span style="color:var(--text4);">Gap: 1.0</span></div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding:10px 12px;background:rgba(20,184,166,.07);border:1px solid rgba(20,184,166,.2);border-radius:6px;font-size:11px;color:var(--teal2);">
+        Achieving the 12-month target maturity state across all domains is realistic with executive sponsorship, dedicated remediation resources, and a formal vulnerability management programme.
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Root Cause Framework — Technology · Process · People</div>
+    <table class="findings-table">
+      <thead><tr><th>Root Cause Category</th><th>Specific Issue</th><th>Contributing Factor</th><th>Recommended Fix</th><th>Priority</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span style="color:#fca5a5;font-size:12px;font-weight:600;">Technology</span></td>
+          <td style="font-size:12px;color:var(--text2);">Patch lag across server estate</td>
+          <td style="font-size:12px;color:var(--text3);">No automated patch management</td>
+          <td style="font-size:12px;color:var(--text2);">Deploy WSUS/SCCM with mandatory SLAs</td>
+          <td><span class="sev sev-critical" style="font-size:10px;">Critical</span></td>
+        </tr>
+        <tr>
+          <td><span style="color:#fca5a5;font-size:12px;font-weight:600;">Technology</span></td>
+          <td style="font-size:12px;color:var(--text2);">Legacy EOL software in production</td>
+          <td style="font-size:12px;color:var(--text3);">End-of-life systems still active</td>
+          <td style="font-size:12px;color:var(--text2);">Accelerate OS/software refresh programme</td>
+          <td><span class="sev sev-critical" style="font-size:10px;">Critical</span></td>
+        </tr>
+        <tr>
+          <td><span style="color:#fdba74;font-size:12px;font-weight:600;">Process</span></td>
+          <td style="font-size:12px;color:var(--text2);">No vulnerability lifecycle tracking</td>
+          <td style="font-size:12px;color:var(--text3);">Findings not tracked to closure</td>
+          <td style="font-size:12px;color:var(--text2);">Implement vulnerability management platform</td>
+          <td><span class="sev sev-critical" style="font-size:10px;">Critical</span></td>
+        </tr>
+        <tr>
+          <td><span style="color:#fdba74;font-size:12px;font-weight:600;">Process</span></td>
+          <td style="font-size:12px;color:var(--text2);">Weak change management</td>
+          <td style="font-size:12px;color:var(--text3);">Uncontrolled configuration drift</td>
+          <td style="font-size:12px;color:var(--text2);">Enforce Change Advisory Board (CAB) process</td>
+          <td><span class="sev sev-high" style="font-size:10px;">High</span></td>
+        </tr>
+        <tr>
+          <td><span style="color:#fde68a;font-size:12px;font-weight:600;">People</span></td>
+          <td style="font-size:12px;color:var(--text2);">Ownership gaps</td>
+          <td style="font-size:12px;color:var(--text3);">No designated remediation owners</td>
+          <td style="font-size:12px;color:var(--text2);">Assign RACI for all critical findings</td>
+          <td><span class="sev sev-high" style="font-size:10px;">High</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 8: ROADMAP & ACTIONS -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-recommendations">
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="card-sm" style="text-align:center;border-color:rgba(239,68,68,.3);">
+      <div style="font-size:24px;font-weight:700;color:#fca5a5;">0–15</div>
+      <div style="font-size:12px;font-weight:600;color:#fca5a5;">Days</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Address 60 Critical Findings</div>
+    </div>
+    <div class="card-sm" style="text-align:center;border-color:rgba(245,158,11,.3);">
+      <div style="font-size:24px;font-weight:700;color:#fde68a;">15–45</div>
+      <div style="font-size:12px;font-weight:600;color:#fde68a;">Days</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Clear High-Risk Backlog</div>
+    </div>
+    <div class="card-sm" style="text-align:center;border-color:rgba(20,184,166,.3);">
+      <div style="font-size:24px;font-weight:700;color:var(--teal2);">12</div>
+      <div style="font-size:12px;font-weight:600;color:var(--teal2);">Months</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:4px;">Target Maturity State</div>
+    </div>
+  </div>
+
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="phase-card">
+      <div><span class="phase-badge phase-1">0–15 DAYS — IMMEDIATE</span></div>
+      <div class="phase-title">Critical Containment Sprint</div>
+      <div class="phase-body">
+        • Patch Apache Struts 2 RCE on DUO01, HSD46, JUM02, SCA01<br>
+        • Apply VMware VMSA-2025-0013 to DMZ-ESX01 &amp; ESX02<br>
+        • Patch Photon OS 4.0 on vCenter (Docker, Samba, GLib, NSS)<br>
+        • Apply RHEL 8 critical patches on IVGSS-DC-RIN<br>
+        • Decommission EOL Office, SQL Server, Sophos agent fix (HSD72)<br>
+        • Assign RACI owners for each of the 60 critical findings
+      </div>
+      <div class="phase-metric">Target: 60 Critical → 0</div>
+    </div>
+    <div class="phase-card">
+      <div><span class="phase-badge phase-2">15–45 DAYS — SHORT-TERM</span></div>
+      <div class="phase-title">High-Risk Remediation &amp; Hardening</div>
+      <div class="phase-body">
+        • Disable SWEET32 (3DES/RC4); enforce TLS 1.2/1.3 across all servers<br>
+        • Enforce SMB Signing on all domain servers and endpoints (GPO)<br>
+        • Enable NLA on all Azure jump servers and RDP gateways<br>
+        • Update Chrome, Edge, Office suite, .NET Core, Java SE, Adobe Reader<br>
+        • Implement centralised patch cadence (weekly for Critical/High)<br>
+        • Disable Telnet; enforce SSH v2 with strong ciphers on switches
+      </div>
+      <div class="phase-metric">Target: 222 High → reduced by 80%</div>
+    </div>
+    <div class="phase-card">
+      <div><span class="phase-badge phase-3">45–90+ DAYS — STRATEGIC</span></div>
+      <div class="phase-title">Resilience &amp; Continuous Management</div>
+      <div class="phase-body">
+        • Establish continuous vulnerability management programme<br>
+        • Deploy PAM solution; enforce MFA on all admin accounts<br>
+        • SIEM/SOC integration with vulnerability telemetry<br>
+        • Formalise Cloud Security Governance (CSPM, Defender for Cloud)<br>
+        • Zero Trust Architecture — micro-segmentation, least privilege<br>
+        • Commission Stage 02 retest VAPT at 90 days to validate closure
+      </div>
+      <div class="phase-metric">Target: ISO 27001 &amp; CERT-In alignment</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Leadership Decision Points — Actions Required Now</div>
+    <div class="rec-item">
+      <div class="rec-num">1</div>
+      <div>
+        <div class="rec-title">Convene Security Response Meeting — This Week</div>
+        <div class="rec-body">Bring together CISO, IT Head (Mr. Arindam Dutta), and business unit leaders to review findings, assign remediation ownership with RACI, and establish a weekly status reporting cadence to leadership. Form a dedicated Vulnerability Remediation Task Force.</div>
+        <div class="rec-tag">↑ CERT-IN COMPLIANCE · BOARD GOVERNANCE</div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-num">2</div>
+      <div>
+        <div class="rec-title">Authorise Emergency Patch Cycle — Within 5 Days</div>
+        <div class="rec-body">Approve and initiate emergency patching for the 60 critical vulnerabilities, prioritising VMware vCenter (Photon OS), Apache Struts 2 application servers, and VMware ESXi DMZ hypervisors. Engage vendor specialists for complex VMware and Linux remediation if internal capacity is limited.</div>
+        <div class="rec-tag">↑ IMMEDIATE BREACH PREVENTION · CERT-IN SLA</div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-num">3</div>
+      <div>
+        <div class="rec-title">Decommission or Migrate End-of-Life Software</div>
+        <div class="rec-body">EOL software (Microsoft Office unsupported, SQL Server unsupported, ASP.NET Core/​.NET Core SEoL) cannot be patched — the only resolution is migration or decommission. Engage vendor for upgrade planning. Until migrated, implement compensating controls (WAF, network isolation). Estimated cost of inaction: loss of regulatory compliance and permanent exploit exposure.</div>
+        <div class="rec-tag">↑ ISO 27001 A.8.19 · REGULATORY RISK ELIMINATION</div>
+      </div>
+    </div>
+    <div class="rec-item">
+      <div class="rec-num">4</div>
+      <div>
+        <div class="rec-title">Establish Vulnerability Tracking Register — Within 10 Days</div>
+        <div class="rec-body">Set up a formal vulnerability tracking register with assigned owners, target closure dates, severity SLAs (Critical: 15 days · High: 30 days · Medium: 90 days · Low: 180 days), and weekly reporting to leadership. All 656 findings currently carry Open status with no governance structure — this is a material ITGC control failure.</div>
+        <div class="rec-tag">↑ GOVERNANCE MATURITY · AUDIT READINESS</div>
+      </div>
+    </div>
+    <div class="rec-item" style="border-bottom:none;">
+      <div class="rec-num">5</div>
+      <div>
+        <div class="rec-title">Schedule Stage 02 Retest Assessment — At 90 Days</div>
+        <div class="rec-body">Commission a validation VAPT at 90 days post-remediation to confirm closure effectiveness and measure progress against the target security posture. This provides independent verification for board reporting, ISO 27001 audit evidence, and CERT-In compliance demonstration.</div>
+        <div class="rec-tag">↑ VERIFIED RISK REDUCTION · COMPLIANCE EVIDENCE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Strategic investments -->
+  <div class="card">
+    <div class="card-title">Strategic Security Investments — Recommended Programme</div>
+    <div class="grid-4" style="margin-bottom:0;">
+      <div style="padding:12px 14px;background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#fca5a5;margin-bottom:6px;">Vulnerability Management Platform</div>
+        <div style="font-size:11px;color:var(--text2);">Automate discovery, tracking, and remediation across all 186 assets. Eliminate manual tracking gaps.</div>
+      </div>
+      <div style="padding:12px 14px;background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#fde68a;margin-bottom:6px;">Privileged Access Management (PAM)</div>
+        <div style="font-size:11px;color:var(--text2);">Control and audit privileged account usage. Prevents credential-based lateral movement across domain.</div>
+      </div>
+      <div style="padding:12px 14px;background:rgba(59,130,246,.06);border:1px solid rgba(59,130,246,.2);border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#93c5fd;margin-bottom:6px;">SIEM / SOC Integration</div>
+        <div style="font-size:11px;color:var(--text2);">Centralise log collection with vulnerability telemetry correlation. Real-time threat detection and response.</div>
+      </div>
+      <div style="padding:12px 14px;background:rgba(20,184,166,.06);border:1px solid rgba(20,184,166,.2);border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:var(--teal2);margin-bottom:6px;">Security Awareness Training</div>
+        <div style="font-size:11px;color:var(--text2);">Build security culture to reduce human-factor risk. Phishing simulation programme for GCC staff.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 11: BENEFITS & VALUE -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-benefits">
+  <div class="grid-3" style="margin-bottom:16px;">
+    <div class="benefit-card" style="border-top-color:#dc2626;">
+      <div style="font-size:22px;margin-bottom:8px;">🛡️</div>
+      <div style="font-size:14px;font-weight:600;color:#dc2626;margin-bottom:6px;">Risk Quantification</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">Translates 656 technical vulnerabilities into board-level business risk language. Leadership can make informed investment decisions backed by CVSS-scored, manually validated findings — not vendor estimates.</div>
+    </div>
+    <div class="benefit-card" style="border-top-color:#d97706;">
+      <div style="font-size:22px;margin-bottom:8px;">📋</div>
+      <div style="font-size:14px;font-weight:600;color:#d97706;margin-bottom:6px;">Regulatory Compliance</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">VAPT conducted per CERT-In mandate for critical IT infrastructure. Provides documented evidence of due diligence for ISO 27001:2022 Annex A controls (A.8.8, A.8.19, A.8.20) and internal audit obligations.</div>
+    </div>
+    <div class="benefit-card" style="border-top-color:#0d9488;">
+      <div style="font-size:22px;margin-bottom:8px;">🎯</div>
+      <div style="font-size:14px;font-weight:600;color:#0d9488;margin-bottom:6px;">Prioritised Remediation</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">Not all 656 findings require the same urgency. The CVSS-aligned, business-impact-tiered priority framework enables IT teams to focus finite resources on the 60 critical findings that carry the highest breach risk first.</div>
+    </div>
+    <div class="benefit-card" style="border-top-color:#1e3a5f;">
+      <div style="font-size:22px;margin-bottom:8px;">🔍</div>
+      <div style="font-size:14px;font-weight:600;color:#1e3a5f;margin-bottom:6px;">Full Attack Surface Visibility</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">Complete inventory of exploitable weaknesses across 89 servers, 17 Azure VMs, 43 network devices, and 54 endpoints — giving IT leadership an accurate, current picture of the entire hybrid attack surface for the first time.</div>
+    </div>
+    <div class="benefit-card" style="border-top-color:#2563eb;">
+      <div style="font-size:22px;margin-bottom:8px;">☁️</div>
+      <div style="font-size:14px;font-weight:600;color:#2563eb;margin-bottom:6px;">Cloud Posture Assessment</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">Azure workloads assessed against the Azure Security Benchmark. IAM, data protection, logging, and incident response gaps identified with specific remediation actions. Confirms sound perimeter security (PaloAlto, Cisco) as a positive baseline.</div>
+    </div>
+    <div class="benefit-card" style="border-top-color:#7c3aed;">
+      <div style="font-size:22px;margin-bottom:8px;">📈</div>
+      <div style="font-size:14px;font-weight:600;color:#7c3aed;margin-bottom:6px;">Maturity Roadmap</div>
+      <div style="font-size:12px;color:#475569;line-height:1.7;">Structured three-phase programme (Stabilize → Strengthen → Optimize) with measurable maturity targets across five domains. Provides a 12-month path from current elevated risk to a managed, audit-ready security posture.</div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div class="card-title">Quantified Value Delivered</div>
+    <div class="grid-4" style="margin-bottom:0;">
+      <div style="text-align:center;padding:16px;">
+        <div style="font-size:28px;font-weight:700;color:#dc2626;">60</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Critical vulnerabilities identified &amp; documented</div>
+      </div>
+      <div style="text-align:center;padding:16px;border-left:1px solid #f1f5f9;">
+        <div style="font-size:28px;font-weight:700;color:#1e3a5f;">186</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Assets assessed with zero production disruption</div>
+      </div>
+      <div style="text-align:center;padding:16px;border-left:1px solid #f1f5f9;">
+        <div style="font-size:28px;font-weight:700;color:#d97706;">100%</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Critical findings manually validated — zero false positives</div>
+      </div>
+      <div style="text-align:center;padding:16px;border-left:1px solid #f1f5f9;">
+        <div style="font-size:28px;font-weight:700;color:#0d9488;">5</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px;">Security maturity domains assessed with gap analysis</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Compliance &amp; Governance Value</div>
+    <div class="grid-3" style="margin-bottom:0;">
+      <div style="padding:14px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:6px;">CERT-In Compliance</div>
+        <div style="font-size:12px;color:#1e3a5f;line-height:1.6;">Assessment conducted per CERT-In mandate. All findings documented with CVE references in CERT-In reporting format. Demonstrates regulatory due diligence to authorities and auditors.</div>
+      </div>
+      <div style="padding:14px;background:#fefce8;border:1px solid #fde047;border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#854d0e;margin-bottom:6px;">ISO 27001:2022 Evidence</div>
+        <div style="font-size:12px;color:#713f12;line-height:1.6;">Provides documentary evidence for A.8.8 (Vulnerability Management), A.8.19 (Patch Management), A.8.20 (Network Security), and A.8.16 (Monitoring) — critical for certification and surveillance audits.</div>
+      </div>
+      <div style="padding:14px;background:#f0fdf4;border:1px solid #86efac;border-radius:6px;">
+        <div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:6px;">Board Risk Reporting</div>
+        <div style="font-size:12px;color:#15803d;line-height:1.6;">Executive-ready findings for Audit Committee reporting. Identifies material control weaknesses (patch management, EOL software, SMB signing) that must be disclosed to the Audit Committee under IT General Controls frameworks.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════ -->
+<!-- PAGE 12: WAY FORWARD -->
+<!-- ══════════════════════════════════════════════ -->
+<div class="page" id="page-wayforward">
+  <div class="alert-banner">
+    <span class="alert-icon">⚠</span>
+    <span><strong>Leadership Commitment Required:</strong> The way forward requires executive sponsorship, budget authorisation, and dedicated remediation ownership. Without structured governance, findings will remain open and the risk of a material breach increases with each passing day.</span>
+  </div>
+
+  <!-- Three horizons visual -->
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-bottom:16px;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+    <div style="background:#1e3a5f;padding:20px;color:#fff;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#93c5fd;margin-bottom:6px;">HORIZON 1 · 0–15 DAYS</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Stabilize</div>
+      <div style="font-size:11px;color:#bfdbfe;line-height:1.7;">Emergency patch sprint for 60 Critical vulnerabilities. War room formed. Ownership assigned. Progress tracked daily.</div>
+      <div style="margin-top:12px;font-size:11px;font-weight:600;color:#fbbf24;">Target: 60 Critical → 0</div>
+    </div>
+    <div style="background:#1d4ed8;padding:20px;color:#fff;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#bfdbfe;margin-bottom:6px;">HORIZON 2 · 15–90 DAYS</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Strengthen</div>
+      <div style="font-size:11px;color:#dbeafe;line-height:1.7;">High-risk remediation, cipher hardening, SMB enforcement, patch governance automation, NLA enforcement, EOL migration planning.</div>
+      <div style="margin-top:12px;font-size:11px;font-weight:600;color:#fbbf24;">Target: High reduced by 80%</div>
+    </div>
+    <div style="background:#0f766e;padding:20px;color:#fff;">
+      <div style="font-size:10px;font-weight:700;letter-spacing:.8px;color:#99f6e4;margin-bottom:6px;">HORIZON 3 · 90+ DAYS</div>
+      <div style="font-size:16px;font-weight:700;margin-bottom:10px;">Optimize</div>
+      <div style="font-size:11px;color:#ccfbf1;line-height:1.7;">Continuous vulnerability management, PAM, SIEM/SOC integration, Zero Trust architecture, cloud security governance, Stage 02 retest.</div>
+      <div style="margin-top:12px;font-size:11px;font-weight:600;color:#fbbf24;">Target: ISO 27001 alignment</div>
+    </div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:16px;">
+    <div class="card">
+      <div class="card-title">Immediate Next Steps — 5 Actions for Leadership</div>
+      <div class="rec-item">
+        <div style="width:24px;height:24px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">1</div>
+        <div>
+          <div class="rec-title">Convene Security Response Meeting — This Week</div>
+          <div class="rec-body">CISO, IT Head (Mr. Arindam Dutta), and business unit leaders to review findings, assign RACI ownership, and establish weekly reporting cadence.</div>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div style="width:24px;height:24px;background:#dc2626;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">2</div>
+        <div>
+          <div class="rec-title">Authorise Emergency Patch Cycle — Within 5 Days</div>
+          <div class="rec-body">Approve patching for 60 critical vulnerabilities. Prioritise VMware vCenter (Photon OS), Apache Struts 2 servers, and ESXi DMZ hypervisors.</div>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div style="width:24px;height:24px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">3</div>
+        <div>
+          <div class="rec-title">Establish Remediation Tracking Register — Within 10 Days</div>
+          <div class="rec-body">Formal register with owners, SLA target dates, and weekly leadership reporting. All 656 findings currently untracked — this is a material ITGC control gap.</div>
+        </div>
+      </div>
+      <div class="rec-item">
+        <div style="width:24px;height:24px;background:#d97706;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">4</div>
+        <div>
+          <div class="rec-title">Engage Specialist Support for Complex Items — Within 15 Days</div>
+          <div class="rec-body">VMware ESXi patching, RHEL 8 kernel updates, and EOL software migration require vendor/specialist engagement. Prime Infoserv available for remediation advisory support.</div>
+        </div>
+      </div>
+      <div class="rec-item" style="border-bottom:none;">
+        <div style="width:24px;height:24px;background:#0d9488;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0;">5</div>
+        <div>
+          <div class="rec-title">Schedule Stage 02 Retest Assessment — At 90 Days</div>
+          <div class="rec-body">Commission validation VAPT to confirm remediation effectiveness and generate ISO 27001 audit evidence. Provides verified risk reduction measurement for board reporting.</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div class="card">
+        <div class="card-title">How Prime Infoserv Can Help</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="padding:10px 12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:5px;">
+            <div style="font-size:12px;font-weight:600;color:#1e40af;margin-bottom:3px;">Remediation Support</div>
+            <div style="font-size:11px;color:#1e3a5f;">Technical advisory and hands-on support for critical finding remediation, patch management, and configuration hardening across servers and Azure workloads.</div>
+          </div>
+          <div style="padding:10px 12px;background:#fefce8;border:1px solid #fde047;border-radius:5px;">
+            <div style="font-size:12px;font-weight:600;color:#854d0e;margin-bottom:3px;">Continuous VAPT Programme</div>
+            <div style="font-size:11px;color:#713f12;">Quarterly or bi-annual VAPT retesting to track progress, identify new vulnerabilities, and maintain CERT-In compliance posture year-round.</div>
+          </div>
+          <div style="padding:10px 12px;background:#f0fdf4;border:1px solid #86efac;border-radius:5px;">
+            <div style="font-size:12px;font-weight:600;color:#166534;margin-bottom:3px;">Security Programme Development</div>
+            <div style="font-size:11px;color:#15803d;">Support for building a formal vulnerability management programme, security governance framework, and CISO advisory services aligned to ISO 27001 and CERT-In.</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Strategic Security Investments — Recommended</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;color:var(--text1);font-weight:500;">Vulnerability Management Platform</span>
+            <span class="sev sev-critical" style="font-size:10px;">Critical</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;color:var(--text1);font-weight:500;">Privileged Access Management (PAM)</span>
+            <span class="sev sev-critical" style="font-size:10px;">Critical</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;color:var(--text1);font-weight:500;">SIEM / SOC Integration Enhancement</span>
+            <span class="sev sev-high" style="font-size:10px;">High</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;color:var(--text1);font-weight:500;">Azure Defender for Cloud (all subscriptions)</span>
+            <span class="sev sev-high" style="font-size:10px;">High</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:#f8fafc;border-radius:5px;border:1px solid #e2e8f0;">
+            <span style="font-size:12px;color:var(--text1);font-weight:500;">Security Awareness Training Programme</span>
+            <span class="sev sev-medium" style="font-size:10px;">Medium</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="background:#1e3a5f;border-radius:8px;padding:20px 24px;text-align:center;">
+    <div style="font-size:13px;font-style:italic;color:#bfdbfe;margin-bottom:8px;">"Cyber resilience is not a one-time assessment — it is a continuous business discipline."</div>
+    <div style="font-size:11px;color:#93c5fd;">— Prime Infoserv Cybersecurity Advisory</div>
+    <div style="margin-top:14px;font-size:12px;color:#fff;font-weight:500;">Prime Infoserv Pvt. Ltd. is committed to supporting Indorama Ventures GSS in achieving a resilient, mature, and continuously improving security posture.</div>
+  </div>
+</div>
+
+
+<div class="footer">
+  Indorama Ventures Global Shared Services Pvt. Ltd. — Confidential Security Intelligence Report &nbsp;|&nbsp; Prepared by: Prime Infoserv Pvt. Ltd. (CERT-In Empanelled) &nbsp;|&nbsp; Report Ref: PIPL/25-26/Indorama/VAPT/S1/06052026 &nbsp;|&nbsp; Classification: RESTRICTED — Board &amp; CXO Only
+</div>
+
+<script>
+// ─── TAB SWITCHING ───
+document.getElementById('tabBar').addEventListener('click',function(e){
+  const t=e.target.closest('.tab');
+  if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active');
+  const pg=document.getElementById('page-'+t.dataset.page);
+  if(pg){pg.classList.add('active');}
+});
+
+Chart.defaults.color='#64748b';
+Chart.defaults.borderColor='#e2e8f0';
+Chart.defaults.font.family='Inter, sans-serif';
+Chart.defaults.font.size=11;
+
+// DONUT
+new Chart(document.getElementById('donutChart'),{
+  type:'doughnut',
+  data:{labels:['Critical','High','Medium','Low'],datasets:[{data:[60,222,331,43],backgroundColor:['#dc2626','#f97316','#f59e0b','#3b82f6'],borderColor:'#fff',borderWidth:3,hoverOffset:6}]},
+  options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.label+': '+c.raw+' ('+Math.round(c.raw/656*100)+'%)'}}}}
+});
+
+// DOMAIN BAR
+new Chart(document.getElementById('domainChart'),{
+  type:'bar',
+  data:{
+    labels:['Servers','Network','Endpoints'],
+    datasets:[
+      {label:'Critical',data:[60,0,0],backgroundColor:'rgba(239,68,68,.7)',borderRadius:2},
+      {label:'High',data:[222,0,0],backgroundColor:'rgba(249,115,22,.6)',borderRadius:2},
+      {label:'Medium',data:[279,31,21],backgroundColor:'rgba(245,158,11,.5)',borderRadius:2},
+      {label:'Low',data:[22,21,0],backgroundColor:'rgba(59,130,246,.4)',borderRadius:2}
+    ]
+  },
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#64748b',boxWidth:10,padding:10}}},scales:{x:{stacked:true,grid:{color:'#f1f5f9'},beginAtZero:true},y:{stacked:true,grid:{display:false}}}}
+});
+
+// RADAR — Business Impact
+new Chart(document.getElementById('radarChart'),{
+  type:'radar',
+  data:{
+    labels:['Server\nInfrastructure','Data\nExfiltration','Regulatory\nRisk','Application\nLayer','Network /\nLateral','Endpoint\nExposure'],
+    datasets:[{label:'Risk Exposure',data:[90,80,70,75,60,35],fill:true,backgroundColor:'rgba(220,38,38,.1)',borderColor:'#dc2626',borderWidth:2,pointBackgroundColor:'#dc2626',pointRadius:4}]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:100,grid:{color:'#e2e8f0'},angleLines:{color:'#e2e8f0'},ticks:{backdropColor:'#fff',color:'#94a3b8',font:{size:9}},pointLabels:{color:'#475569',font:{size:10}}}}}
+});
+
+// HIGH-RISK CATEGORIES
+new Chart(document.getElementById('catChart'),{
+  type:'bar',
+  data:{labels:['Unpatched OS/Software','Misconfiguration','Exposed Services','Weak Credentials/Ciphers'],datasets:[{label:'Count',data:[89,67,43,23],backgroundColor:['rgba(239,68,68,.6)','rgba(249,115,22,.6)','rgba(245,158,11,.55)','rgba(59,130,246,.55)'],borderRadius:4}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},beginAtZero:true},y:{grid:{display:false}}}}
+});
+
+// CVSS DISTRIBUTION
+new Chart(document.getElementById('cvssChart'),{
+  type:'bar',
+  data:{labels:['CVSS 9–10\n(Critical)','CVSS 7–8.9\n(High)','CVSS 4–6.9\n(Medium)','CVSS 0–3.9\n(Low)'],datasets:[{label:'Findings',data:[25,197,331,43],backgroundColor:['#dc2626','#f97316','#f59e0b','#3b82f6'],borderRadius:4}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{autoSkip:false}},y:{grid:{color:'#f1f5f9'},beginAtZero:true}}}
+});
+
+// VULNERABILITY THEMES (POLAR)
+new Chart(document.getElementById('themeChart'),{
+  type:'polarArea',
+  data:{labels:['Patch/EOL Software','Weak Encryption','Misconfiguration','SMB/Auth Gaps','Exposed Services','Cloud Config'],datasets:[{data:[222,120,67,62,43,25],backgroundColor:['rgba(220,38,38,.5)','rgba(249,115,22,.5)','rgba(245,158,11,.5)','rgba(37,99,235,.45)','rgba(124,58,237,.45)','rgba(13,148,136,.45)'],borderColor:['#dc2626','#f97316','#f59e0b','#2563eb','#7c3aed','#0d9488'],borderWidth:1.5}]},
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{grid:{color:'#e2e8f0'},ticks:{backdropColor:'#fff',color:'#94a3b8',font:{size:9}}}}}
+});
+
+// OS COVERAGE
+new Chart(document.getElementById('osChart'),{
+  type:'bar',
+  data:{labels:['WinSrv 2022','WinSrv 2019','WinSrv 2016','RHEL 8','Photon OS 4.0','Ubuntu'],datasets:[{label:'Servers',data:[50,10,10,4,2,1],backgroundColor:['#2563eb','#3b82f6','#60a5fa','#dc2626','#ef4444','#0d9488'],borderRadius:3}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+});
+
+// KILL CHAIN IMPACT
+new Chart(document.getElementById('impactChart'),{
+  type:'bar',
+  data:{labels:['Ransomware / Ops Disruption','Data Exfiltration','Privilege Escalation','Regulatory Risk','Reputation / Brand','Supply Chain'],datasets:[{label:'Impact Level',data:[90,80,75,70,60,50],backgroundColor:['#dc2626','#f97316','#dc2626','#f59e0b','#f97316','#3b82f6'],borderRadius:3}]},
+  options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},beginAtZero:true,max:100},y:{grid:{display:false},ticks:{font:{size:10}}}}}
+});
+
+// MATURITY RADAR
+new Chart(document.getElementById('maturityChart'),{
+  type:'radar',
+  data:{
+    labels:['Vulnerability\nManagement','Patch\nManagement','Identity &\nAccess','Network\nSecurity','Endpoint\nSecurity'],
+    datasets:[
+      {label:'Current',data:[1.5,1.5,2.5,3.0,3.0],fill:true,backgroundColor:'rgba(220,38,38,.1)',borderColor:'#dc2626',borderWidth:2,pointBackgroundColor:'#dc2626',pointRadius:4},
+      {label:'12-Month Target',data:[3.5,3.5,4.0,4.0,4.0],fill:true,backgroundColor:'rgba(13,148,136,.07)',borderColor:'#0d9488',borderWidth:2,pointBackgroundColor:'#0d9488',pointRadius:4,borderDash:[5,3]}
+    ]
+  },
+  options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:5,grid:{color:'#e2e8f0'},angleLines:{color:'#e2e8f0'},ticks:{backdropColor:'#fff',color:'#94a3b8',font:{size:9},stepSize:1},pointLabels:{color:'#475569',font:{size:10}}}}}
+});
+</script>
+</body>
+</html>
